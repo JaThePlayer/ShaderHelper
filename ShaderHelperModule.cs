@@ -17,6 +17,9 @@ namespace Celeste.Mod.ShaderHelper
         public static ShaderHelperModule Instance;        
         private IGraphicsDeviceService graphicsDeviceService;
 
+        public override Type SettingsType => typeof(ShaderHelperModuleSettings);
+        public static ShaderHelperModuleSettings Settings => (ShaderHelperModuleSettings)Instance._Settings;
+
         public float Time=0.0f;
 
         public ShaderHelperModule()
@@ -78,6 +81,8 @@ namespace Celeste.Mod.ShaderHelper
         public void Apply(On.Celeste.Glitch.orig_Apply orig, VirtualRenderTarget source, float timer, float seed, float amplitude)
         {
             orig(source, timer, seed, amplitude);
+            if (!Settings.Enabled)
+                return;
             foreach (IEffectManager manager in globalEffects)
                 if(manager.Enabled)
                     manager.Apply(source);

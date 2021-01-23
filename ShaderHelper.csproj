@@ -57,6 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ShaderHelperModuleSettings.cs" />
     <Compile Include="Triggers\AddEffectTrigger.cs" />
     <Compile Include="DefaultEffectManager.cs" />
     <Compile Include="IEffectManager.cs" />

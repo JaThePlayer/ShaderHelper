@@ -7,3 +7,6 @@ Shaders are expected to be within the Effects/ folder within the mod's zip, and 
 Can add shaders to maps using Ahorn triggers (AddEffectTrigger, ClearEffectTrigger). Use a comma separated list of shader names (their key names in the FX dictionary) to add shaders. Parameters can be changed by using the parameter triggers (will be likely changed out for a more ellegant system in the future). Shaders added this way will be applied globally (to the whole screen), to apply a shader to an individual object a codemod must be used.
 
 Should be updated over time, and over time some better documentation should be added. Some triggers are provided, so map makers can add some basic shaders. Expect updates.
+
+
+A couple prepackaged shaders, shaderhelper/grayscaleeffect (a simple grayscale), shaderhelper/testshader ( a weird coloring shader), shaderhelper/testshader2 (a slowly shifting weird coloring shader).
