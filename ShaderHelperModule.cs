@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using Celeste;
 using System.IO;
+using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.ShaderHelper
 {
@@ -16,6 +17,8 @@ namespace Celeste.Mod.ShaderHelper
         public static ShaderHelperModule Instance;        
         private IGraphicsDeviceService graphicsDeviceService;
 
+        public float Time=0.0f;
+
         public ShaderHelperModule()
         {
             Instance = this;
@@ -23,7 +26,6 @@ namespace Celeste.Mod.ShaderHelper
         }
 
         public Dictionary<string, Effect> FX;   // Atlas of shaders
-
         List<IEffectManager> globalEffects; //a list of effects to apply to the screen
 
         public void AddGlobalEffect(IEffectManager effect)
@@ -36,13 +38,28 @@ namespace Celeste.Mod.ShaderHelper
             globalEffects.Remove(effect);
         }
 
+        public void ClearEffects()
+        {
+            globalEffects.Clear();
+        }
+
         public override void Load()
         {
             On.Celeste.Glitch.Apply += Apply;
+            On.Celeste.LevelEnter.Go += OnLevelEnter;
+            On.Monocle.Engine.Update += Update;
         }
         public override void Unload()
         {
             On.Celeste.Glitch.Apply -= Apply;
+            On.Celeste.LevelEnter.Go -= OnLevelEnter;
+            On.Monocle.Engine.Update -= Update;
+        }
+
+        public void OnLevelEnter(On.Celeste.LevelEnter.orig_Go orig, Session session, bool fromSaveData)
+        {
+            orig(session, fromSaveData);
+            ClearEffects();
         }
 
         public Effect LoadEffect(string path)
@@ -62,7 +79,14 @@ namespace Celeste.Mod.ShaderHelper
         {
             orig(source, timer, seed, amplitude);
             foreach (IEffectManager manager in globalEffects)
-                manager.Apply(source);
+                if(manager.Enabled)
+                    manager.Apply(source);
+        }
+
+        public void Update(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime)
+        {
+            orig(self, gameTime);
+            Time += Engine.DeltaTime;
         }
 
         public override void LoadContent(bool firstLoad)
@@ -78,8 +102,6 @@ namespace Celeste.Mod.ShaderHelper
                         FX[shaderName] = LoadEffect(shaderName + ".cso");
                         Logger.Log(LogLevel.Info, "ShaderHelper", "Loaded shader " + shaderName + " path " + asset.PathVirtual);
                     }
-
-            AddGlobalEffect(new DefaultEffectManager(FX["shaderhelper/testshader"])); //just a debug shader
         }
     }
 }

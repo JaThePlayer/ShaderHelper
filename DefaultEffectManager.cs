@@ -9,19 +9,36 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.ShaderHelper
 {
-    //for effects with no parameters
+    //for effects with no parameters/engine timing only
     public class DefaultEffectManager: IEffectManager
     {
-        Effect effect;
+        private Effect effect;
         public DefaultEffectManager(Effect eff)
         {
             effect = eff;
         }
 
+        void ApplyParameters()
+        {
+            EffectParameter deltaParam = effect.Parameters["DeltaTime"];
+            if (deltaParam != null)
+                deltaParam.SetValue(Engine.DeltaTime);
+            EffectParameter timeParam = effect.Parameters["Time"];
+            if (timeParam != null)
+                timeParam.SetValue(ShaderHelperModule.Instance.Time);
+        }
+
+        public override void Render(Texture2D source, Texture2D map)
+        {
+            ApplyParameters();
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, effect);
+            Draw.SpriteBatch.Draw(source, Vector2.Zero, Color.White);
+            Draw.SpriteBatch.End();
+        }
+
         public override void Apply(VirtualRenderTarget source)
         {
-            //basically just stolen from the glitch effect
-            //will be refined later
+            ApplyParameters();
             VirtualRenderTarget tempA = GameplayBuffers.TempA;
             Engine.Instance.GraphicsDevice.SetRenderTarget(tempA);
             Engine.Instance.GraphicsDevice.Clear(Color.Transparent);
@@ -35,5 +52,6 @@ namespace Celeste.Mod.ShaderHelper
             Draw.SpriteBatch.Draw(tempA, Vector2.Zero, Color.White);
             Draw.SpriteBatch.End();
         }
+
     }
 }
