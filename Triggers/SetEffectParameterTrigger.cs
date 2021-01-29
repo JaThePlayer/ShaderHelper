@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Celeste.Mod.ShaderHelper
 {
+
     [CustomEntity("ShaderHelper/SetFloatParameterTrigger")]
     class SetFloatParameterTrigger : Trigger
     {
@@ -124,5 +125,4 @@ namespace Celeste.Mod.ShaderHelper
             }
         }
     }
-
 }

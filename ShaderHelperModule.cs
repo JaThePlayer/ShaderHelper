@@ -9,6 +9,7 @@ using Monocle;
 using Celeste;
 using System.IO;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 
 namespace Celeste.Mod.ShaderHelper
 {
@@ -69,14 +70,24 @@ namespace Celeste.Mod.ShaderHelper
         {
             if (graphicsDeviceService == null)  //probably not a great method of doing this whatsoever
                 graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
-
             ModAsset asset = Everest.Content.Get("Effects/" + path, true);
             if (asset == null)
             {
                 Logger.Log(LogLevel.Warn,"ShaderHelper", "Failed to load asset " + "Effects/" + path);
                 return null;
             }
-            return new Effect(graphicsDeviceService.GraphicsDevice ,asset.Data);
+
+            try
+            {
+                Effect returnV = new Effect(graphicsDeviceService.GraphicsDevice, asset.Data);
+                return returnV;
+            }
+            catch(Exception ex)
+            {
+                Logger.Log(LogLevel.Error, "ShaderHelper", "Failed to load the shader " + path);
+                Logger.Log(LogLevel.Error, "ShaderHelper", "Exception: " + ex.ToString());
+            }
+            return null;
         }
         public void Apply(On.Celeste.Glitch.orig_Apply orig, VirtualRenderTarget source, float timer, float seed, float amplitude)
         {
@@ -104,7 +115,10 @@ namespace Celeste.Mod.ShaderHelper
                     {
                         string shaderName = asset.PathVirtual.Substring(8);
                         shaderName = shaderName.Substring(0, shaderName.Length - 4);
-                        FX[shaderName] = LoadEffect(shaderName + ".cso");
+
+                        Effect effect = LoadEffect(shaderName + ".cso");
+                        if(effect != null)
+                            FX[shaderName] = effect;
                         Logger.Log(LogLevel.Info, "ShaderHelper", "Loaded shader " + shaderName + " path " + asset.PathVirtual);
                     }
         }

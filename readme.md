@@ -1,6 +1,6 @@
 # ShaderHelper
 
-A small helper that is still fairly immature. Shaders are automatically loaded from other mods, and are expected to be in the compiled shader object (cso) format. These can be made using a tool like [EFB](http://github.com/GlaireDaggers/Effect-Build) (many thanks to jade for finding this tool and generally helping).
+A small helper that is still fairly immature. Shaders are automatically loaded from other mods, and are expected to be in the compiled shader object (cso) format. These can be made using a tool like [ShaderCompiler](https://github.com/lordseanington/ShaderCompiler/releases/tag/0.0.2r) put together to work with both FNA and XNA. (many thanks to jade for generally helping).
 
 Shaders are expected to be within the Effects/ folder within the mod's zip, and will be auto loaded and stored in the FX dictionary (ShaderHelper.Instance.FX). Shaders are mapped to the FX dictionary with the key being the filename with the Effects/ path and the file extension cut off. For example, Effects/shaderhelper/testshader.cso maps to the key shaderhelper/testshader .
 
