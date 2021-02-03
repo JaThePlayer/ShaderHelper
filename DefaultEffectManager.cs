@@ -18,7 +18,7 @@ namespace Celeste.Mod.ShaderHelper
             effect = eff;
         }
 
-        void ApplyParameters()
+        public override void ApplyParameters()
         {
             EffectParameter deltaParam = effect.Parameters["DeltaTime"];
             if (deltaParam != null)
@@ -39,8 +39,9 @@ namespace Celeste.Mod.ShaderHelper
         public override void Apply(VirtualRenderTarget source)
         {
             ApplyParameters();
-            VirtualRenderTarget tempA = GameplayBuffers.TempA;
-            Engine.Instance.GraphicsDevice.SetRenderTarget(tempA);
+            VirtualRenderTarget tempA = GameplayBuffers.TempA;            
+            
+            Engine.Instance.GraphicsDevice.SetRenderTarget(tempA); //copy to a temp texture, not the best solution for this
             Engine.Instance.GraphicsDevice.Clear(Color.Transparent);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
             Draw.SpriteBatch.Draw(source, Vector2.Zero, Color.White);
@@ -48,7 +49,7 @@ namespace Celeste.Mod.ShaderHelper
 
             Engine.Instance.GraphicsDevice.SetRenderTarget(source);
             Engine.Instance.GraphicsDevice.Clear(Color.Transparent);
-            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, effect);
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, effect); //apply the effect back as we render back to the source
             Draw.SpriteBatch.Draw(tempA, Vector2.Zero, Color.White);
             Draw.SpriteBatch.End();
         }

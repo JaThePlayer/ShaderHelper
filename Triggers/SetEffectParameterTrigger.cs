@@ -11,19 +11,15 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Celeste.Mod.ShaderHelper
 {
 
-    [CustomEntity("ShaderHelper/SetFloatParameterTrigger")]
-    class SetFloatParameterTrigger : Trigger
+    public abstract class BaseParameterTrigger : Trigger
     {
-        string shaderName;
-        string key;
-        float value;
-        public SetFloatParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
+        protected string shaderName;
+        protected string key;
+        public BaseParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
             shaderName = data.Attr("shader");
             key = data.Attr("key");
-            value = data.Float("value");
         }
-
         public override void OnEnter(Player player)
         {
             if (ShaderHelperModule.Instance.FX.ContainsKey(shaderName))
@@ -33,96 +29,83 @@ namespace Celeste.Mod.ShaderHelper
                 {
                     EffectParameter parameter = shader.Parameters[key];
                     if (parameter != null)
-                        parameter.SetValue(value);
+                        ApplyParamter(parameter);
                 }
             }
+        }
+
+
+        public abstract void ApplyParamter(EffectParameter parameter);
+    }
+
+
+    [CustomEntity("ShaderHelper/SetFloatParameterTrigger")]
+    class SetFloatParameterTrigger : BaseParameterTrigger
+    {
+        protected float value;
+        public SetFloatParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
+        {
+            value = data.Float("value");
+        }
+
+        public override void ApplyParamter(EffectParameter parameter)
+        {
+            parameter.SetValue(value);
         }
     }
 
     [CustomEntity("ShaderHelper/SetBoolParameterTrigger")]
-    class SetBoolParameterTrigger : Trigger
+    class SetBoolParameterTrigger : BaseParameterTrigger
     {
-        string shaderName;
-        string key;
-        bool value;
+        protected bool value;
         public SetBoolParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
-            shaderName = data.Attr("shader");
-            key = data.Attr("key");
             value = data.Bool("value");
         }
 
-        public override void OnEnter(Player player)
+        public override void ApplyParamter(EffectParameter parameter)
         {
-            if (ShaderHelperModule.Instance.FX.ContainsKey(shaderName))
-            {
-                Effect shader = ShaderHelperModule.Instance.FX[shaderName];
-                if (shader != null)
-                {
-                    EffectParameter parameter = shader.Parameters[key];
-                    if (parameter != null)
-                        parameter.SetValue(value);
-                }
-            }
+            parameter.SetValue(value);
         }
     }
 
     [CustomEntity("ShaderHelper/SetIntegerParameterTrigger")]
-    class SetIntegerParameterTrigger : Trigger
+    class SetIntegerParameterTrigger : BaseParameterTrigger
     {
-        string shaderName;
-        string key;
-        int value;
+        protected int value;
         public SetIntegerParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
-            shaderName = data.Attr("shader");
-            key = data.Attr("key");
             value = data.Int("value");
         }
 
-        public override void OnEnter(Player player)
+        public override void ApplyParamter(EffectParameter parameter)
         {
-            if (ShaderHelperModule.Instance.FX.ContainsKey(shaderName))
-            {
-                Effect shader = ShaderHelperModule.Instance.FX[shaderName];
-                if (shader != null)
-                {
-                    EffectParameter parameter = shader.Parameters[key];
-                    if (parameter != null)
-                        parameter.SetValue(value);
-                }
-            }
+            parameter.SetValue(value);
         }
     }
 
 
     [CustomEntity("ShaderHelper/SetVector2ParameterTrigger")]
-    class SetVector2ParameterTrigger : Trigger
+    class SetVector2ParameterTrigger : BaseParameterTrigger
     {
-        string shaderName;
-        string key;
         Vector2 value;
         public SetVector2ParameterTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
-            shaderName = data.Attr("shader");
-            key = data.Attr("key");
-            string[] strv = data.Attr("value").Split(',');
-            if (strv.Length > 1) //we need to values
-                value = new Vector2(Int32.Parse(strv[0]), Int32.Parse(strv[1]));
-        }
-
-        public override void OnEnter(Player player)
-        {
-            if (ShaderHelperModule.Instance.FX.ContainsKey(shaderName))
+            try
             {
-                Effect shader = ShaderHelperModule.Instance.FX[shaderName];
-                if (shader != null)
-                {
-                    EffectParameter parameter = shader.Parameters[key];
-                    if (parameter != null)
-                        parameter.SetValue(value);
-                }
+                string[] strv = data.Attr("value").Split(',');
+                if (strv.Length > 1) //we need two values to set the parameter
+                    value = new Vector2(float.Parse(strv[0]), float.Parse(strv[1]));
             }
+            catch(Exception ex)
+            {
+                Logger.Log(LogLevel.Error, "ShaderHelper", "Exception caught while parsing trigger.\n" + ex.ToString());
+            }
+         }
+
+        public override void ApplyParamter(EffectParameter parameter)
+        {
+            parameter.SetValue(value);
         }
     }
 }

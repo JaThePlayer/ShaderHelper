@@ -10,5 +10,8 @@ namespace Celeste.Mod.ShaderHelper
     public class ShaderHelperModuleSettings : EverestModuleSettings
     {
         public bool Enabled { get; set; } = true;
+
+        [SettingMaxLength(100)]
+        public string Shaders { get; set; } = "";
     }
 }

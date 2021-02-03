@@ -12,7 +12,7 @@ namespace Celeste.Mod.ShaderHelper
     [CustomEntity("ShaderHelper/AddEffectTrigger")]
     public class AddEffectTrigger : Trigger
     {
-        string shaderName;
+        protected string shaderName;
 
         public AddEffectTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
@@ -21,19 +21,7 @@ namespace Celeste.Mod.ShaderHelper
 
         public override void OnEnter(Player player)
         {
-            if (String.IsNullOrEmpty(shaderName))
-                return;
-            string[] shaders = shaderName.Split(',');
-            foreach (string shaderv in shaders)
-            {
-                if (ShaderHelperModule.Instance.FX.ContainsKey(shaderv))
-                {
-                    Effect shader = ShaderHelperModule.Instance.FX[shaderv];
-                    ShaderHelperModule.Instance.AddGlobalEffect(new DefaultEffectManager(shader));
-                }
-                else
-                    Logger.Log(LogLevel.Warn, "ShaderHelper", "AddEffectTrigger could not find shader " + shaderName + " in the FX.\n");
-            }
+            ShaderHelperModule.Instance.AddEffect(shaderName);
             RemoveSelf();
         }
     }
