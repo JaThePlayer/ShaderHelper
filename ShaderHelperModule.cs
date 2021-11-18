@@ -15,6 +15,10 @@ namespace Celeste.Mod.ShaderHelper
 {
     public class ShaderHelperModule : EverestModule
     {
+        public sealed class AssetTypeCompiledShader { private AssetTypeCompiledShader() { } }
+        public sealed class AssetTypeFXFile { private AssetTypeFXFile() { } }
+
+
         public static ShaderHelperModule Instance;        
         public override Type SettingsType => typeof(ShaderHelperModuleSettings);
         public static ShaderHelperModuleSettings Settings => (ShaderHelperModuleSettings)Instance._Settings;
@@ -30,20 +34,20 @@ namespace Celeste.Mod.ShaderHelper
             globalEffects = new List<IEffectManager>();
         }
 
-        public Dictionary<string, Effect> FX;   // Atlas of shaders
+        public Dictionary<string, Effect> FX = new Dictionary<string, Effect>();   // Atlas of shaders
         List<IEffectManager> globalEffects; //a list of effects to apply to the screen
 
 
         public void AddEffect(string shaderName)
         {
-            if (String.IsNullOrEmpty(shaderName))
+            if (string.IsNullOrEmpty(shaderName))
                 return;
             string[] shaders = shaderName.Split(',');
             foreach (string shaderv in shaders)
             {
-                if (ShaderHelperModule.Instance.FX.ContainsKey(shaderv))
+                if (Instance.FX.ContainsKey(shaderv))
                 {
-                    Effect shader = ShaderHelperModule.Instance.FX[shaderv];
+                    Effect shader = Instance.FX[shaderv];
                     AddEffect(new DefaultEffectManager(shader));
                 }
                 else
@@ -73,12 +77,55 @@ namespace Celeste.Mod.ShaderHelper
             On.Celeste.Glitch.Apply += Apply;
             On.Celeste.LevelEnter.Go += OnLevelEnter;
             On.Monocle.Engine.Update += Update;
+            Everest.Content.OnGuessType += Content_OnGuessType;
+            Everest.Content.OnUpdate += Content_OnUpdate;
         }
+
+        private void Content_OnUpdate(ModAsset from, ModAsset to)
+        {
+            if (to.Type == typeof(AssetTypeCompiledShader))
+            {
+                string shaderName = GetShaderNameFromFilename(from.PathVirtual, false);
+
+                Effect previousEffect = null;
+                if (FX.ContainsKey(shaderName))
+                {
+                    previousEffect = FX[shaderName];
+                }
+
+                FX[shaderName] = LoadEffect(shaderName);
+
+                AssetReloadHelper.ReloadLevel();
+
+                // crashes the game!!! (but not calling it causes a memory leak D:)
+                //previousEffect?.Dispose();
+
+                Logger.Log(LogLevel.Info, "ShaderHelper", "Reloaded shader " + shaderName + " from path " + to.PathVirtual);
+
+            }
+        }
+
+        private string Content_OnGuessType(string file, out Type type, out string format)
+        {
+            if (IsCompiledEffectFile(file))
+            {
+                type = typeof(AssetTypeCompiledShader);
+                format = ".cso";
+                return file.Substring(0, file.Length - 4);
+            }
+
+            type = null;
+            format = null;
+            return null;
+        }
+
         public override void Unload()
         {
             On.Celeste.Glitch.Apply -= Apply;
             On.Celeste.LevelEnter.Go -= OnLevelEnter;
             On.Monocle.Engine.Update -= Update;
+            Everest.Content.OnGuessType -= Content_OnGuessType;
+            Everest.Content.OnUpdate -= Content_OnUpdate;
         }
 
         public void OnLevelEnter(On.Celeste.LevelEnter.orig_Go orig, Session session, bool fromSaveData)
@@ -89,8 +136,6 @@ namespace Celeste.Mod.ShaderHelper
 
         public Effect LoadEffect(string path)
         {
-            if (graphicsDeviceService == null)  //probably not a great method of doing this whatsoever
-                graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
             ModAsset asset = Everest.Content.Get("Effects/" + path, true);
             if (asset == null)
             {
@@ -100,7 +145,7 @@ namespace Celeste.Mod.ShaderHelper
 
             try
             {
-                Effect returnV = new Effect(graphicsDeviceService.GraphicsDevice, asset.Data);
+                Effect returnV = new Effect(Engine.Graphics.GraphicsDevice, asset.Data);
                 return returnV;
             }
             catch(Exception ex)
@@ -128,18 +173,26 @@ namespace Celeste.Mod.ShaderHelper
             Time += Engine.DeltaTime;
         }
 
+        public static string GetShaderNameFromFilename(string virtualPath, bool stripExtension)
+        {
+            string shaderName = virtualPath.Substring("Effects/".Length);
+            return stripExtension ? shaderName.Substring(0, shaderName.Length - 4) : shaderName;
+        }
+
+        public static bool IsCompiledEffectFile(string path)
+        {
+            return Path.GetExtension(path) == ".cso" && path.StartsWith("Effects/");
+        }
+
         public override void LoadContent(bool firstLoad)
         {
-            FX = new Dictionary<string, Effect>();
             foreach (ModContent content in Everest.Content.Mods)
                 foreach(ModAsset asset in content.List)
-                    //don't know everest well enough, so I'm pretty sure there is a better way
-                    if (Path.GetExtension(asset.PathVirtual) == ".cso" && asset.PathVirtual.StartsWith("Effects/"))
+                    if (asset.Type == typeof(AssetTypeCompiledShader))
                     {
-                        string shaderName = asset.PathVirtual.Substring(8);
-                        shaderName = shaderName.Substring(0, shaderName.Length - 4);
+                        string shaderName = asset.PathVirtual.Substring("Effects/".Length);
 
-                        Effect effect = LoadEffect(shaderName + ".cso");
+                        Effect effect = LoadEffect(shaderName);
                         if(effect != null)
                             FX[shaderName] = effect;
                         Logger.Log(LogLevel.Info, "ShaderHelper", "Loaded shader " + shaderName + " path " + asset.PathVirtual);
