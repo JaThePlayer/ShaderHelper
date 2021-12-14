@@ -1,6 +1,6 @@
 ﻿- Name: ShaderHelper
   Version: 0.0.3
-  DLL: ShaderHelper.dll
+  DLL: bin/Debug/ShaderHelper.dll
   Dependencies:
     - Name: Everest
       Version: 1.1505.0

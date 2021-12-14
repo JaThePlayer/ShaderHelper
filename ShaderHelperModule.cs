@@ -18,14 +18,12 @@ namespace Celeste.Mod.ShaderHelper
         public sealed class AssetTypeCompiledShader { private AssetTypeCompiledShader() { } }
         public sealed class AssetTypeFXFile { private AssetTypeFXFile() { } }
 
+        private string[] prepackagedShaders = { "shaderhelper/grayscaleeffect", "shaderhelper/testshader", "shaderhelper/testshader2" };
 
         public static ShaderHelperModule Instance;        
         public override Type SettingsType => typeof(ShaderHelperModuleSettings);
         public static ShaderHelperModuleSettings Settings => (ShaderHelperModuleSettings)Instance._Settings;
 
-
-
-        private IGraphicsDeviceService graphicsDeviceService;
         public float Time=0.0f;
 
         public ShaderHelperModule()
@@ -89,9 +87,7 @@ namespace Celeste.Mod.ShaderHelper
 
                 Effect previousEffect = null;
                 if (FX.ContainsKey(shaderName))
-                {
                     previousEffect = FX[shaderName];
-                }
 
                 FX[shaderName] = LoadEffect(shaderName);
 
@@ -197,6 +193,18 @@ namespace Celeste.Mod.ShaderHelper
                             FX[shaderName] = effect;
                         Logger.Log(LogLevel.Info, "ShaderHelper", "Loaded shader " + shaderName + " path " + asset.PathVirtual);
                     }
+            //this doesn't work for prepackaged shaders, so we load these manually
+            foreach (string asset in prepackagedShaders)
+            {
+                Effect effect = LoadEffect(asset + ".cso");
+                if (effect == null)
+                    Logger.Log(LogLevel.Warn, "ShaderHelper", "Failed to load the prepackaged shader " + asset);
+                else
+                {
+                    FX[asset] = effect;
+                    Logger.Log(LogLevel.Info, "ShaderHelper", "Loaded the prepackaged shader " + asset);
+                }
+            }
         }
     }
 }
